@@ -34,3 +34,7 @@ caps_*.xml
 LAUNCH.md
 validation/
 prerelease_check.py
+
+# Scratch folders that tools drop beside the repo. Never part of the plugin.
+*outputs/
+*Outputs/

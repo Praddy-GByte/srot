@@ -1,5 +1,7 @@
 # Srot
 
+<img src="assets/srot-mark-light-128.png" width="104" align="right" alt="">
+
 **It brings verified Indian government geodata into QGIS, each layer carrying
 its own citation.** Browse the catalogue and add a layer with one click, or
 describe what you want in a sentence.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.7 — unreleased
+
+- New icon. The plugin shipped with the national flag, which says where the data
+  is from but nothing about what the plugin does, reads as a language switcher
+  at 24px, and is restricted from use as a product mark by the Flag Code of
+  India. In its place: a source glowing at the centre of the earth with data in
+  orbit around it, which is what the name means. SVG masters are in `assets/`.
+
 ## 0.1.6 — 2026-09-18
 
 - A caveat about a layer's source now gets a line of its own instead of running
