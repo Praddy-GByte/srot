@@ -645,6 +645,7 @@ def test_catalogue_browser_against_real_qt():
     """The Browse tab must build, list, filter and add with real Qt widgets."""
     from srot.agent import tools
     from srot.core.journal import Journal
+    from srot.core.compat import ITEM_SELECTABLE
     from srot.ui.browser import CatalogueBrowser
     from srot.ui.dock import SrotDock
 
@@ -685,9 +686,20 @@ def test_catalogue_browser_against_real_qt():
 
     panel.source.setCurrentIndex(0)
     panel.search.setText("zzzz qqqq")
-    check("a search with no matches empties the list", panel.results.count() == 0)
+    # A list that simply empties reads as an empty catalogue rather than a
+    # search worth rephrasing, so the panel puts one unselectable row in its
+    # place. What matters is that nothing addable is left behind.
+    check("a search with no matches offers nothing to add", not panel._entries)
+    check("the list says so instead of going blank",
+          panel.results.count() == 1
+          and "Nothing matches" in panel.results.item(0).text(),
+          panel.results.count())
+    check("the notice cannot be selected or added",
+          not (panel.results.item(0).flags() & ITEM_SELECTABLE))
     check("Add is disabled again with nothing selected",
           not panel.add_button.isEnabled())
+    check("and the panel said it where it can be read",
+          "Nothing matches" in panel.message.text(), panel.message.text())
 
     # The apply half of the add path, with a payload standing in for the
     # download, so this stays offline.
