@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Build output
+dist/
+*.zip
+
+# QGIS
+*.qgs~
+*.qgz~
+.qgis2/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cached downloads the plugin makes at runtime (never commit these -- the
+# Bhuvan capabilities document alone is 7.5 MB)
+bharatgis_agent_cache/
+*.geojson.cache
+caps_*.xml
+
+# Private working notes -- pre-launch checklist and draft announcement text.
+# Kept out of the public repository; it is written for the author, not for users.
+LAUNCH.md
+validation/
+prerelease_check.py

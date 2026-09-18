@@ -1,0 +1,88 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  offline:
+    name: Offline suite (no QGIS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the offline suite
+        run: python -m srot.tests.run
+
+  lint:
+    name: pyflakes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyflakes
+      # The compat shim re-exports QAction/QShortcut on purpose, and the smoke
+      # test imports every module as its test, so both are expected to look
+      # "unused" to a static checker.
+      - name: Run pyflakes
+        run: |
+          python -m pyflakes srot \
+            | grep -v "core/compat.py" \
+            | grep -v "tests/smoke_qgis.py" \
+            | tee /tmp/pyflakes.txt
+          test ! -s /tmp/pyflakes.txt
+
+  qgis:
+    name: Real QGIS smoke test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ubuntu 24.04 ships QGIS 3.34 built against the system python3 (3.12),
+      # which is the same combination the plugin is verified on.
+      - name: Install QGIS
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            python3-qgis python3-pyqt5.sip xvfb
+
+      - name: Report the build under test
+        run: |
+          python3 -c "from qgis.core import Qgis; \
+                      from qgis.PyQt.QtCore import QT_VERSION_STR; \
+                      print('QGIS', Qgis.QGIS_VERSION, '| Qt', QT_VERSION_STR)"
+
+      - name: Run the smoke test against real QGIS
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python3 -m srot.tests.smoke_qgis
+
+  package:
+    name: Build the plugin zip
+    runs-on: ubuntu-latest
+    needs: [offline, qgis]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: bash scripts/package.sh
+      - name: Check the zip structure QGIS requires
+        run: |
+          # exactly one top-level folder, and metadata.txt inside it
+          unzip -l dist/srot.zip | awk '{print $4}' \
+            | grep -E "^srot/" > /dev/null
+          unzip -l dist/srot.zip | grep -q "srot/metadata.txt"
+          unzip -l dist/srot.zip | grep -q "srot/__init__.py"
+          ! unzip -l dist/srot.zip | grep -q "__pycache__"
+          ! unzip -l dist/srot.zip | grep -q "\.pyc"
+          echo "zip structure OK"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: srot-plugin
+          path: dist/srot.zip
