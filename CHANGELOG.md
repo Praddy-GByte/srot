@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.6 — 2026-09-18
+
+- A caveat about a layer's source now gets a line of its own instead of running
+  onto the end of the feature count, where it read as more of the same sentence
+  and went unread. "not Survey of India data" is the reason the note exists.
+
+## 0.1.5 — 2026-09-18
+
+Clicking Add to map appeared to do nothing. Two reasons, both of them the kind
+that only show up when somebody uses the panel.
+
+- **The Browse tab had no status line.** Everything it reported -- progress,
+  errors, "added 14 features" -- was written to the dock's status label, which
+  lives on the Ask tab. A reader on Browse could not see any of it, so a failed
+  add and a click that did nothing looked identical. The panel now says what
+  happened on the panel itself.
+- **The area box arrived holding "Bengaluru".** That is a city, and a boundary
+  set is filtered by state, so leaving the box alone quietly asked for the
+  districts of a state that does not exist, and nothing reached the map. The
+  box now starts empty, with a placeholder saying what empty means: the whole
+  of India for a boundary set, Bengaluru for an OpenStreetMap preset.
+
 ## 0.1.4 — 2026-09-18
 
 Two things found by opening the panel in QGIS and using it, which no amount of
@@ -128,7 +150,7 @@ First release.
 
 ### Verification
 
-- 688 offline checks, plus 121 against a real QGIS 3.34.4 / Qt 5.15.13 build,
+- 700 offline checks, plus 121 against a real QGIS 3.34.4 / Qt 5.15.13 build,
   covering real Processing runs, renderers, layout export, the encrypted key
   store, Qt widgets, and the `initGui` / `unload` install path.
 - Zero third-party Python dependencies.

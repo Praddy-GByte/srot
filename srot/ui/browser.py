@@ -28,7 +28,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import QgsApplication
 
 from ..agent import tools
-from ..core.compat import ITEM_NO_FLAGS
+from ..core.compat import ITEM_NO_FLAGS, TEXT_SELECTABLE
 from ..core.tasks import CallableTask
 from ..india import catalog, places
 
@@ -178,6 +178,24 @@ def _titlecase_place(text):
     )
 
 
+def added_message(result, fallback_title=""):
+    """What the panel says after a layer lands.
+
+    A caveat about the source is the whole reason the note exists, so it gets a
+    line of its own rather than being run onto the end of the count, where it
+    reads as more of the same sentence and is skipped.
+    """
+    added = result.get("added") or fallback_title
+    line = "Added {0}".format(added)
+    count = result.get("feature_count")
+    if count is not None:
+        line += " ({0} features)".format(count)
+    if result.get("substitute_layer"):
+        line += ", plus {0}".format(result["substitute_layer"])
+    note = result.get("note")
+    return line + "\n\n" + note if note else line
+
+
 #: Shown in place of the list when a search matches nothing, so the panel says
 #: what happened instead of going blank.
 NO_MATCHES = (
@@ -196,8 +214,8 @@ def _no_matches_item():
 #: national files filtered on load, so "Kerala districts" is the district set
 #: plus a state; OpenStreetMap is fetched for one place at a time.
 AREA_FIELD = {
-    "boundary": ("State (optional)", "state"),
-    "osm": ("Place", "place"),
+    "boundary": ("State (optional)", "state", "all of India"),
+    "osm": ("Place", "place", DEFAULT_PLACE),
 }
 
 
@@ -286,7 +304,12 @@ class CatalogueBrowser(QWidget):
         place_row = QHBoxLayout()
         self.place_label = QLabel("Area", self)
         place_row.addWidget(self.place_label)
-        self.place = QLineEdit(DEFAULT_PLACE, self)
+        self.place = QLineEdit(self)
+        # A value here rather than a placeholder meant the box arrived holding
+        # "Bengaluru", which is a city. Left alone on a boundary set that is
+        # filtered by state, it silently asked for districts in a state that
+        # does not exist. Empty now means what it should: no state filter for a
+        # boundary set, and tool_call's own fallback for OpenStreetMap.
         self.place.setToolTip(
             "A state narrows a boundary set; a place is where OpenStreetMap "
             "features are fetched from."
@@ -307,7 +330,22 @@ class CatalogueBrowser(QWidget):
         button_row.addStretch(1)
         layout.addLayout(button_row)
 
+        # The dock's own status label lives on the Ask tab, so anything this
+        # panel reported through the signal alone was written somewhere the
+        # reader could not see while they were on Browse: a failed add looked
+        # exactly like a click that did nothing. This panel says it here.
+        self.message = QLabel("", self)
+        self.message.setWordWrap(True)
+        self.message.setTextInteractionFlags(TEXT_SELECTABLE)
+        layout.addWidget(self.message)
+
         self.refresh()
+
+    def _say(self, text):
+        """Report to the reader of this tab, and to the dock's status line."""
+        self.message.setText(text)
+        # The dock's label is one line high, so it gets the flattened form.
+        self.status.emit(" ".join(str(text).split()))
 
     # -- listing --------------------------------------------------------
 
@@ -329,20 +367,20 @@ class CatalogueBrowser(QWidget):
             # An empty list with nothing in it looks like an empty catalogue.
             # Say what happened and what would work instead.
             self.results.addItem(_no_matches_item())
-            self.status.emit("Nothing matches {0!r}.".format(query.strip()))
+            self._say("Nothing matches {0!r}.".format(query.strip()))
         elif area:
-            self.status.emit(
+            self._say(
                 "{0} matches, with {1} filled in as the area.".format(
                     len(self._entries), area
                 )
             )
         elif len(self._entries) > 500:
-            self.status.emit(
+            self._say(
                 "{0} matches; showing the first 500. Narrow the search to see "
                 "the rest.".format(len(self._entries))
             )
         else:
-            self.status.emit("{0} matches.".format(len(self._entries)))
+            self._say("{0} matches.".format(len(self._entries)))
         self._selection_changed(self.results.currentRow())
 
     def _selection_changed(self, row):
@@ -352,6 +390,9 @@ class CatalogueBrowser(QWidget):
         self.place.setEnabled(field is not None)
         self.place_label.setEnabled(field is not None)
         self.place_label.setText(field[0] if field else "Area")
+        # Say what leaving it empty will do, so an empty box is a choice rather
+        # than an oversight.
+        self.place.setPlaceholderText(field[2] if field else "")
         if entry is None:
             self.detail.setText("")
             return
@@ -374,11 +415,11 @@ class CatalogueBrowser(QWidget):
             name, arguments = tool_call(entry, self.place.text().strip())
             tool = tools.get(name)
         except Exception as exc:
-            self.status.emit(str(exc))
+            self._say(str(exc))
             return
 
         self._set_busy(True)
-        self.status.emit("Fetching {0}...".format(entry["title"]))
+        self._say("Fetching {0}...".format(entry["title"]))
 
         def fetch():
             if tool.fetch is None:
@@ -395,7 +436,7 @@ class CatalogueBrowser(QWidget):
         def terminated():
             self._task = None
             self._set_busy(False)
-            self.status.emit(
+            self._say(
                 "Could not fetch {0}: {1}".format(
                     entry["title"], task.error or "the source did not respond"
                 )
@@ -413,18 +454,11 @@ class CatalogueBrowser(QWidget):
         try:
             result = tool.apply(arguments, context, payload)
         except Exception as exc:
-            self.status.emit("Could not add {0}: {1}".format(entry["title"], exc))
+            self._say("Could not add {0}: {1}".format(entry["title"], exc))
             return
 
         added = result.get("added") or entry["title"]
-        note = result.get("note")
-        count = result.get("feature_count")
-        message = "Added {0}".format(added)
-        if count is not None:
-            message += " ({0} features)".format(count)
-        if result.get("substitute_layer"):
-            message += ", plus {0}".format(result["substitute_layer"])
-        self.status.emit(message + ("  " + note if note else ""))
+        self._say(added_message(result, entry["title"]))
         self.layer_added.emit(added)
 
     def _set_busy(self, busy):

@@ -28,7 +28,7 @@ about=Srot turns plain-language requests into real QGIS work, with Indian geodat
     * Reproducible - every session is recorded as a runnable PyQGIS script you can save, review and re-run.
     * Citation-ready - each layer carries its publisher, licence, citation and retrieval date in the layer's
       own metadata, and the whole project exports as a source list in plain text, Markdown or BibTeX.
-version=0.1.4
+version=0.1.6
 author=Pradeepika Kaushik
 email=pradeepika.kaushik@gmail.com
 repository=https://github.com/Praddy-GByte/srot
@@ -40,7 +40,14 @@ tags=ai,agent,llm,india,bhuvan,isro,census,openstreetmap,air quality,automation,
 experimental=True
 deprecated=False
 server=False
-changelog=0.1.4 - Browse tab search fixes, found by using the panel in QGIS.
+changelog=0.1.6 - A caveat about a layer's source now reads as its own line, not as a
+    continuation of the feature count.
+    0.1.5 - Add to map appeared to do nothing.
+    * The Browse tab reported progress and errors to a status label on the Ask tab, where the
+      reader could not see them. It now reports on the panel itself.
+    * The area box arrived holding a city name, which a state-filtered boundary set could not
+      match. It now starts empty and says what empty means.
+    0.1.4 - Browse tab search fixes, found by using the panel in QGIS.
     * Searching "kerala districts" returned nothing, because boundary sets are national files
       with no state in their name. A place in the query is now read as the area instead.
     * An empty result list said nothing at all; it now explains and suggests.

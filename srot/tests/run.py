@@ -1476,6 +1476,61 @@ def test_catalogue_browser():
     check("and the panel has something to say about it",
           "Nothing matches" in browser.NO_MATCHES, browser.NO_MATCHES)
 
+    # The area box used to arrive holding "Bengaluru" as a value. On a boundary
+    # set, which filters by state, that silently asked for districts of a state
+    # that does not exist -- and the add failed with nothing on the map.
+    source_text = (pathlib.Path(browser.__file__)).read_text(encoding="utf-8")
+    check("the area box starts empty rather than holding a city",
+          "QLineEdit(DEFAULT_PLACE" not in source_text)
+    check("each kind says what an empty area box means",
+          browser.AREA_FIELD["boundary"][2] == "all of India"
+          and browser.AREA_FIELD["osm"][2] == browser.DEFAULT_PLACE,
+          browser.AREA_FIELD)
+
+    district_entry = [e for e in browser.entries("boundaries") if e["id"] == "district"][0]
+    check("an empty area on a boundary set means the whole country",
+          "state" not in browser.tool_call(district_entry, "")[1])
+    check("an empty area on an OpenStreetMap preset still has somewhere to look",
+          browser.tool_call({"kind": "osm", "id": "hospital"}, "")[1]["place"]
+          == browser.DEFAULT_PLACE)
+
+    # Everything this panel reports has to appear on this panel. The dock's own
+    # status label sits on the Ask tab, so reporting through the signal alone
+    # put failures somewhere a reader on Browse could not see them, and a
+    # failed add was indistinguishable from a click that did nothing.
+    check("the panel reports through its own status line",
+          "def _say(self, text):" in source_text)
+    check("nothing reports through the signal alone",
+          source_text.count("self.status.emit(") == 1,
+          "{0} direct emits".format(source_text.count("self.status.emit(")))
+    check("the status line is a widget on this panel",
+          "self.message = QLabel(" in source_text)
+
+    # The caveat about a source is the reason the note exists. Run onto the end
+    # of the feature count it reads as more of the same sentence and is skipped,
+    # which is how "not Survey of India data" goes unread.
+    plain = browser.added_message({"added": "Kerala districts", "feature_count": 14})
+    check("a plain add reads as one line",
+          plain == "Added Kerala districts (14 features)", plain)
+
+    caveated = browser.added_message({
+        "added": "Kerala districts",
+        "feature_count": 14,
+        "note": "Community or GADM-derived, not Survey of India data.",
+    })
+    check("a caveat gets a line of its own",
+          caveated.startswith("Added Kerala districts (14 features)\n\n")
+          and caveated.endswith("not Survey of India data."), caveated)
+    check("the dock's one-line status stays one line",
+          "\n" not in " ".join(caveated.split()))
+
+    check("a substitute layer is named",
+          "plus" in browser.added_message(
+              {"added": "Slope", "substitute_layer": "district slope"}))
+    check("a missing name falls back to the catalogue title",
+          browser.added_message({}, "Village boundaries")
+          == "Added Village boundaries")
+
     # Which tab opens first is the difference between the Browse tab being the
     # plugin's front door and being a tab nobody discovers. It is decided by
     # whether a model is configured, and the obvious test for that -- calling
