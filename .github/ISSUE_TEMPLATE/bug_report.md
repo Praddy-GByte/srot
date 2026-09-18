@@ -35,8 +35,8 @@ paste here
 
 - [ ] The first Bhuvan layer of a session can take up to a minute — their
       capabilities document is 7–10 MB. Was it slow, or actually stuck?
-- [ ] If a data.gov.in request failed, are you using your own API key? The
-      portal's shared sample key is rate limited within a few calls.
+- [ ] If a data.gov.in request failed, is your own API key set in the plugin
+      settings? The plugin ships with no key; data.gov.in needs one.
 - [ ] If the model called a tool with the wrong parameters and recovered on the
       next step, that is expected on small local models — worth mentioning
       which model, but it may not be a bug.

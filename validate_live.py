@@ -184,10 +184,17 @@ def test_bhuvan_renders():
 
 def test_datagov_points():
     from srot.agent import tools
+    from srot.core import settings as plugin_settings
     from srot.core.journal import Journal
     from srot.india import loaders
 
     import time
+
+    if not plugin_settings.has_datagov_key():
+        result("data.gov.in live fetch", "UNVERIFIED",
+               "no data.gov.in key configured; set DATA_GOV_IN_API_KEY to run "
+               "this section")
+        return
 
     payload = None
     for attempt in range(4):
@@ -199,7 +206,7 @@ def test_datagov_points():
         except loaders.LoaderError as exc:
             if "rate-limited" not in str(exc) or attempt == 3:
                 result("data.gov.in live fetch", "UNVERIFIED",
-                       "shared sample key exhausted: {0}".format(str(exc)[:150]))
+                       "{0}".format(str(exc)[:150]))
                 return
             time.sleep(20 * (attempt + 1))
     records = payload["records"]

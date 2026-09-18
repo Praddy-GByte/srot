@@ -4,7 +4,8 @@
 Most people who want a Bhuvan layer want exactly that and nothing else. This
 panel gives them the whole catalogue -- every Bhuvan layer, every boundary set,
 every data.gov.in resource and every OpenStreetMap preset -- as a searchable
-list with an Add button, and asks for no API key, no provider and no model.
+list with an Add button, and asks for no provider and no model. Only the
+data.gov.in feeds need a key, which the portal gives out free.
 
 It calls the same tools the agent calls, so a layer added here behaves
 identically, carries the same provenance, and appears in the same exported
@@ -180,8 +181,8 @@ class CatalogueBrowser(QWidget):
         )
         intro = QLabel(
             "Search {0} layers and datasets from ISRO Bhuvan, data.gov.in, "
-            "the boundary sets and OpenStreetMap. No account or model "
-            "needed.".format(total),
+            "the boundary sets and OpenStreetMap. No model needed; only the "
+            "data.gov.in feeds ask for a free key.".format(total),
             self,
         )
         intro.setWordWrap(True)

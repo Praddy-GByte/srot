@@ -140,7 +140,7 @@ def test_imports():
     from srot.ui import dock, settings_dialog  # noqa: F401,F811
 
     check("every plugin module imports under real PyQGIS", True)
-    check("version is exposed", srot.__version__ == "0.1.1")
+    check("version is exposed", srot.__version__ == "0.1.2")
     check(
         "classFactory exists",
         callable(getattr(srot, "classFactory", None)),

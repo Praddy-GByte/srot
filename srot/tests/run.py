@@ -1125,15 +1125,37 @@ def test_http_error_keeps_status_and_body():
             check("the error body survives", "Rate limit" in (exc.body or ""), str(exc.body))
 
         # data.gov.in turns that into an actionable message
+        from ..core import settings as plugin_settings
         from ..india import loaders
+
+        # The plugin carries no key of its own, so the request is never made
+        # without one and the user is told where to get one.
+        saved_key = os.environ.pop("DATA_GOV_IN_API_KEY", None)
+        try:
+            loaders.fetch_datagov("some-resource-id")
+            check("a missing data.gov.in key is refused before the request", False)
+        except loaders.LoaderError as exc:
+            check(
+                "a missing data.gov.in key says where to get one",
+                "register" in str(exc).lower() and "data.gov.in" in str(exc),
+                str(exc),
+            )
+        check(
+            "no key is reported as absent",
+            not plugin_settings.has_datagov_key(),
+        )
+
+        # Everything below is about what the portal answers once a key is set.
+        os.environ["DATA_GOV_IN_API_KEY"] = "test-key-not-a-secret"
+        check("a configured key is reported as present", plugin_settings.has_datagov_key())
 
         try:
             loaders.fetch_datagov("some-resource-id")
             check("data.gov.in 429 is translated", False)
         except loaders.LoaderError as exc:
             check(
-                "data.gov.in 429 explains the shared key",
-                "rate-limited" in str(exc) and "register" in str(exc).lower(),
+                "data.gov.in 429 is actionable",
+                "rate-limited" in str(exc) and "try again" in str(exc).lower(),
                 str(exc),
             )
 
@@ -1147,6 +1169,10 @@ def test_http_error_keeps_status_and_body():
         _Blocking.scripted = (200, b'{"records":[{"a":"1"}],"field":[]}')
         payload = loaders.fetch_datagov("some-resource-id", limit=1)
         check("a 200 still parses", payload["records"] == [{"a": "1"}], str(payload))
+
+        os.environ.pop("DATA_GOV_IN_API_KEY", None)
+        if saved_key is not None:
+            os.environ["DATA_GOV_IN_API_KEY"] = saved_key
 
         # a genuine transport failure, with no HTTP response at all
         class _Dead(_Blocking):

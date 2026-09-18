@@ -52,8 +52,9 @@ one that knows India.
 
 The **Browse** tab lists the whole catalogue -- every Bhuvan layer, every
 boundary set, every data.gov.in resource, every OpenStreetMap preset -- as a
-searchable list with an Add button. No API key, no provider, no model. Type
-`kerala land use`, press Add, and the layer is on your map.
+searchable list with an Add button. No provider, no model. Type
+`kerala land use`, press Add, and the layer is on your map. Only the
+data.gov.in feeds ask for a key, which the portal gives out free.
 
 Boundary sets take an optional state, so `districts` plus `Kerala` gives you
 Kerala's fifteen. OpenStreetMap presets take a place.
@@ -132,8 +133,11 @@ as unverified rather than quietly presented as working.
 - **QGIS cuts network connections at 60 seconds by default.** Bhuvan's
   capabilities document and any city-sized Overpass query both run past that,
   so the plugin raises the ceiling for those calls and puts your setting back.
-- **data.gov.in's shared sample key** is rate limited within a handful of
-  calls. The plugin says so instead of showing a bare 429.
+- **data.gov.in requires a key of its own**, free but separate. The plugin
+  carries none: the portal's shared sample key is exhausted within a handful of
+  calls across everyone using it, so shipping it would mean the first request
+  usually fails for no visible reason. The plugin asks once and says where to
+  get one. Bhuvan, the boundary sets and OpenStreetMap need no key at all.
 - **Renamed cities** — Bangalore/Bengaluru, Allahabad/Prayagraj,
   Banaras/Varanasi, Gurgaon/Gurugram and 30 more resolve either way, offline,
   with no geocoding round-trip.
@@ -245,8 +249,10 @@ Open **Web → Srot → Settings**.
   can use the `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` environment variable
   instead if you would rather skip the master-password prompt.
 
-A free [data.gov.in](https://data.gov.in) key is worth adding too — the shared
-sample key runs out fast.
+For the data.gov.in feeds you also need a free
+[data.gov.in](https://data.gov.in) key: register, then My Account → APIs, and
+paste it into the plugin settings. Bhuvan, the boundary sets and OpenStreetMap
+work without one.
 
 ---
 
@@ -303,7 +309,7 @@ srot/
 ├── agent/      providers (3 wire formats), tools (registry + tiers),
 │               prompts, loop (QgsTask state machine)
 ├── ui/         dock, settings dialog
-└── tests/      670 offline checks, no QGIS needed
+└── tests/      673 offline checks, no QGIS needed
 ```
 
 Two rules run through the whole codebase:
@@ -321,7 +327,7 @@ Two rules run through the whole codebase:
 Two suites, and they test different things.
 
 ```bash
-python3 -m srot.tests.run          # 670 checks, no QGIS needed
+python3 -m srot.tests.run          # 673 checks, no QGIS needed
 ```
 
 Runs anywhere: a stub of the PyQGIS API is installed into `sys.modules` first.

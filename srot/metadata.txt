@@ -2,7 +2,7 @@
 name=Srot
 qgisMinimumVersion=3.28
 qgisMaximumVersion=4.99
-description=Verified Indian government geodata inside QGIS: 342 ISRO Bhuvan layers across 44 states, Census and Survey of India boundaries, and live data.gov.in feeds. Browse and add without any account or model; each layer is probed before loading and carries its own citation.
+description=Verified Indian government geodata inside QGIS: 342 ISRO Bhuvan layers across 44 states, Census and Survey of India boundaries, and live data.gov.in feeds. Browse and add without any model; each layer is probed before loading and carries its own citation.
 about=Srot turns plain-language requests into real QGIS work, with Indian geodata built in.
     Ask for "the boundary of Pune district and every hospital in it" or "load LULC for Andhra Pradesh
     and clip it to Guntur", and the agent resolves the place, fetches the data from verified Indian
@@ -23,11 +23,12 @@ about=Srot turns plain-language requests into real QGIS work, with Indian geodat
     * Works fully offline with a local Ollama model, or with Anthropic Claude, OpenAI, or any
       OpenAI-compatible endpoint. API keys are stored encrypted in the QGIS Authentication Manager.
     * Works with no model at all - the Browse tab lists the whole catalogue and adds any layer with one click,
-      needing no API key and no provider. The natural-language tab is an optional layer on top.
+      needing no model and no provider. Only the data.gov.in feeds ask for a free portal key.
+      The natural-language tab is an optional layer on top.
     * Reproducible - every session is recorded as a runnable PyQGIS script you can save, review and re-run.
     * Citation-ready - each layer carries its publisher, licence, citation and retrieval date in the layer's
       own metadata, and the whole project exports as a source list in plain text, Markdown or BibTeX.
-version=0.1.1
+version=0.1.2
 author=Pradeepika Kaushik
 email=pradeepika.kaushik@gmail.com
 repository=https://github.com/Praddy-GByte/srot
@@ -39,7 +40,12 @@ tags=ai,agent,llm,india,bhuvan,isro,census,openstreetmap,air quality,automation,
 experimental=True
 deprecated=False
 server=False
-changelog=0.1.1 - Packaging and static-analysis pass. No change to behaviour.
+changelog=0.1.2 - The plugin no longer carries a data.gov.in key of its own.
+    * The portal's shared sample key is exhausted within a handful of calls across everyone using
+      it, so shipping it meant the first request usually failed for no visible reason. data.gov.in
+      now asks once for a free key and says where to get one.
+    * Bhuvan, the boundary sets and OpenStreetMap continue to need no key at all.
+    0.1.1 - Packaging and static-analysis pass. No change to behaviour.
     * Every unscoped Qt and PyQGIS enum now resolves through a compatibility layer, so the plugin
       loads unchanged on Qt5 and Qt6.
     * Best-effort operations record what they skipped in the plugin's log panel tab rather than

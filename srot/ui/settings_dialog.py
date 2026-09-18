@@ -89,16 +89,18 @@ class SettingsDialog(QDialog):
 
         self.datagov_key = QLineEdit(settings.get("datagov_api_key"), self)
         self.datagov_key.setPlaceholderText(
-            "optional - without one, the shared sample key is used"
+            "needed only for the data.gov.in feeds"
         )
         india_form.addRow("data.gov.in key", self.datagov_key)
 
         note = QLabel(
-            "data.gov.in's shared sample key is rate limited after a handful of "
-            "calls. A personal key is free: register at data.gov.in, then "
-            "My Account &rarr; APIs.",
+            "A data.gov.in key is free and takes about a minute: register at "
+            "<a href=\"https://data.gov.in\">data.gov.in</a>, then "
+            "My Account &rarr; APIs. Bhuvan, the boundary sets and "
+            "OpenStreetMap need no key.",
             self,
         )
+        note.setOpenExternalLinks(True)
         note.setWordWrap(True)
         india_form.addRow("", note)
         layout.addWidget(india_box)

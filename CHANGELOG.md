@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.2 — 2026-09-18
+
+The plugin no longer carries a data.gov.in key of its own.
+
+- data.gov.in's portal publishes a shared sample key for anyone to try the
+  service with. Shipping it looked like convenience, but the quota is shared
+  across everyone using it and is exhausted within a handful of calls, so in
+  practice the first request usually failed for no visible reason. The plugin
+  now asks once for a free key and says exactly where to get it.
+- Bhuvan's 342 layers, the Census and Survey of India boundary sets and the
+  OpenStreetMap presets continue to need no key at all. Only the data.gov.in
+  feeds do.
+- Nothing in the packaged plugin is now mistaken for a credential by a secret
+  scanner, because there is no key in it to mistake.
+
 ## 0.1.1 — 2026-09-18
 
 Packaging and static-analysis pass. No change to behaviour, data sources or
@@ -86,7 +101,7 @@ First release.
 
 ### Verification
 
-- 670 offline checks, plus 121 against a real QGIS 3.34.4 / Qt 5.15.13 build,
+- 673 offline checks, plus 121 against a real QGIS 3.34.4 / Qt 5.15.13 build,
   covering real Processing runs, renderers, layout export, the encrypted key
   store, Qt widgets, and the `initGui` / `unload` install path.
 - Zero third-party Python dependencies.

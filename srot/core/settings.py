@@ -207,20 +207,26 @@ def llm_api_key():
     return ""
 
 
-#: data.gov.in publishes this key openly on its own API documentation page for
-#: anyone to try the service with. It is not a credential: it is rate limited
-#: within a handful of calls, and the plugin says so and asks for a real key
-#: rather than pretending otherwise. It is assembled from two halves because a
-#: secret scanner cannot tell a published sample from a live key, and a false
-#: positive in every downstream security scan has a cost of its own.
-DATAGOV_SAMPLE_KEY = "579b464db66ec23bdd000001" + "cdd3946e44ce4aad7209ff7b23ac571b"
+#: Where a reader is sent to get a key of their own. Registration is free and
+#: takes about a minute.
+DATAGOV_KEY_URL = "https://data.gov.in"
+
+#: Said in one place so the settings dialog, the loaders and the agent all give
+#: the same instruction.
+DATAGOV_KEY_MISSING = (
+    "data.gov.in needs an API key, which is free: register at {0}, then open "
+    "My Account -> APIs to copy it, and paste it into the plugin settings. "
+    "Bhuvan, the boundary sets and OpenStreetMap need no key."
+).format(DATAGOV_KEY_URL)
 
 
 def datagov_api_key():
-    """data.gov.in key.  Falls back to the portal's shared sample key.
+    """The user's data.gov.in key, or an empty string if none is set.
 
-    The sample key is rate limited within a handful of calls, so the settings
-    dialog nudges users to register their own.
+    The plugin carries no key of its own. The portal does publish a shared
+    sample key, but it is exhausted within a handful of calls across everyone
+    using it, so relying on it would mean the first request usually fails for
+    no visible reason. Asking once for a free key is the honest trade.
     """
     key = read_api_key(get("auth_config_id_datagov"), "api_key")
     if key:
@@ -228,12 +234,9 @@ def datagov_api_key():
     key = get("datagov_api_key")
     if key:
         return key
-    key = os.environ.get("DATA_GOV_IN_API_KEY", "")
-    if key:
-        return key
-    return DATAGOV_SAMPLE_KEY
+    return os.environ.get("DATA_GOV_IN_API_KEY", "")
 
 
-def datagov_key_is_shared():
-    """Whether the caller is on the portal's public sample key."""
-    return datagov_api_key() == DATAGOV_SAMPLE_KEY
+def has_datagov_key():
+    """Whether a data.gov.in key is available from any source."""
+    return bool(datagov_api_key())

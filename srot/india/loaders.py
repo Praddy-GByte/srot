@@ -495,6 +495,8 @@ def fetch_datagov(resource_id, filters=None, limit=500, feedback=None):
     from urllib.parse import urlencode
 
     api_key = settings.datagov_api_key()
+    if not api_key:
+        raise LoaderError(settings.DATAGOV_KEY_MISSING)
     collected = []
     offset = 0
     page_size = min(int(limit), 1000)
@@ -517,18 +519,14 @@ def fetch_datagov(resource_id, filters=None, limit=500, feedback=None):
         except net.HttpError as exc:
             if exc.status == 429:
                 raise LoaderError(
-                    "data.gov.in rate-limited the request. {0}".format(
-                        "You are using the portal's shared sample key, which runs "
-                        "out within a few calls. Register a free key at "
-                        "data.gov.in and set it in the plugin settings."
-                        if settings.datagov_key_is_shared()
-                        else "Wait a moment and try again."
-                    )
+                    "data.gov.in rate-limited the request. Wait a moment and "
+                    "try again, or lower the row limit."
                 )
             if exc.status == 403:
                 raise LoaderError(
-                    "data.gov.in rejected the API key. Register a free key at "
-                    "data.gov.in (My Account -> APIs) and set it in the plugin settings."
+                    "data.gov.in rejected the API key. Check it in the plugin "
+                    "settings, or copy a fresh one from My Account -> APIs at "
+                    "{0}.".format(settings.DATAGOV_KEY_URL)
                 )
             raise
 
