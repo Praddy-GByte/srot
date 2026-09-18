@@ -164,8 +164,13 @@ class SrotDock(QDockWidget):
         return self._context_provider()
 
     def show_best_tab(self):
-        """Open on Browse until a model is configured, then on Ask."""
-        self.tabs.setCurrentIndex(1 if settings.model_name() else 0)
+        """Open on Browse until a model is configured, then on Ask.
+
+        Somebody who has not set a model cannot use the Ask tab at all, so
+        opening there shows them a prompt box that will only fail. Browse works
+        for everyone from the first click, which is why it is the default.
+        """
+        self.tabs.setCurrentIndex(1 if settings.model_is_configured() else 0)
 
     # -- input ----------------------------------------------------------
 

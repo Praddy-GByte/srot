@@ -1437,6 +1437,80 @@ def test_catalogue_browser():
     check("an unknown kind is refused",
           _raises(lambda: browser.tool_call({"kind": "nonsense"}), ValueError))
 
+    # The most natural query anybody types has to work. Boundary sets are
+    # national files filtered as they load, so nothing in the district entry
+    # contains "kerala" and plain matching returns an empty list -- which reads
+    # as an empty catalogue rather than a search that needs rephrasing.
+    check("plain matching alone finds no Kerala districts",
+          browser.entries("all", "kerala districts") == [])
+
+    results, area = browser.search("all", "kerala districts")
+    check("searching for Kerala districts finds the district set",
+          any(e["kind"] == "boundary" for e in results),
+          [e["id"] for e in results][:5])
+    check("and offers Kerala as the area", area == "Kerala", area)
+    check("the area is a real argument, not decoration",
+          browser.tool_call(
+              [e for e in results if e["kind"] == "boundary"][0], area
+          )[1].get("state") == "Kerala")
+
+    _, ap_area = browser.search("all", "andhra pradesh districts")
+    check("a two-word state is not read as its first word",
+          ap_area == "Andhra Pradesh", ap_area)
+
+    _, alias_area = browser.search("all", "bangalore hospitals")
+    check("a historical city name resolves to the current one",
+          alias_area == "Bengaluru", alias_area)
+
+    plain, plain_area = browser.search("all", "rainfall")
+    check("a query that matches on its own is left alone",
+          plain and plain_area == "", plain_area)
+
+    lulc, lulc_area = browser.search("all", "kerala land use")
+    check("a query naming a state that does match keeps matching normally",
+          lulc and lulc_area == "", lulc_area)
+
+    nothing, no_area = browser.search("all", "zzz nonsense query")
+    check("a genuinely unmatchable query stays empty",
+          nothing == [] and no_area == "")
+    check("and the panel has something to say about it",
+          "Nothing matches" in browser.NO_MATCHES, browser.NO_MATCHES)
+
+    # Which tab opens first is the difference between the Browse tab being the
+    # plugin's front door and being a tab nobody discovers. It is decided by
+    # whether a model is configured, and the obvious test for that -- calling
+    # model_name() -- is wrong: every provider carries a default model, so
+    # model_name() is never empty and the dock always opened on Ask.
+    from ..core import settings as plugin_settings
+
+    saved = plugin_settings.get("model")
+    saved_auth = plugin_settings.get("auth_config_id")
+    try:
+        plugin_settings.set_value("model", "")
+        plugin_settings.set_value("auth_config_id", "")
+        check("a fresh install reports no configured model",
+              not plugin_settings.model_is_configured())
+        check("model_name() still answers with the provider default",
+              bool(plugin_settings.model_name()),
+              plugin_settings.model_name())
+        check("the two are not interchangeable",
+              plugin_settings.model_is_configured()
+              is not bool(plugin_settings.model_name()))
+
+        plugin_settings.set_value("model", "llama3.2")
+        check("a chosen model is reported as configured",
+              plugin_settings.model_is_configured())
+
+        # A key stored for a hosted provider counts on its own: that user left
+        # the model name at the provider default on purpose.
+        plugin_settings.set_value("model", "")
+        plugin_settings.set_value("auth_config_id", "authcfg1")
+        check("a stored key alone counts as configured",
+              plugin_settings.model_is_configured())
+    finally:
+        plugin_settings.set_value("model", saved or "")
+        plugin_settings.set_value("auth_config_id", saved_auth or "")
+
 
 def test_provenance():
     """Every layer the plugin adds must be able to say where it came from."""

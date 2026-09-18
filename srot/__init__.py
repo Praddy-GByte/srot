@@ -5,7 +5,7 @@ This module only exposes the QGIS plugin entry point. All real work lives in
 the sub-packages so that nothing heavy is imported at QGIS startup.
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.4"
 __author__ = "Srot contributors"
 __license__ = "GPL-3.0-or-later"
 

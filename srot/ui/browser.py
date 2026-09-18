@@ -28,8 +28,9 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import QgsApplication
 
 from ..agent import tools
+from ..core.compat import ITEM_NO_FLAGS
 from ..core.tasks import CallableTask
-from ..india import catalog
+from ..india import catalog, places
 
 #: Which catalogue families the filter offers, and how each entry is turned
 #: into a tool call.
@@ -119,6 +120,76 @@ def entries(source="all", query=""):
         return all(word in haystack for word in words)
 
     return [entry for entry in found if matches(entry)]
+
+
+def _place_in(words):
+    """Find a gazetteer place inside a list of query words.
+
+    Returns ``(place, remaining_words)``, or ``("", words)`` if there is none.
+    Longest span first, so "andhra pradesh" is not read as "andhra". Only exact
+    gazetteer entries count: the partial matching in ``places.lookup`` is right
+    for a place the user typed on purpose and wrong for a stray search word.
+    """
+    for size in range(min(3, len(words)), 0, -1):
+        for start in range(len(words) - size + 1):
+            span = words[start:start + size]
+            key = places.normalise(" ".join(span))
+            if key in places.STATES or key in places.CITIES:
+                # The canonical name, not the one that was typed: "bangalore"
+                # goes into the area box as Bengaluru, which is what the
+                # boundary files and Overpass both answer to.
+                return key, words[:start] + words[start + size:]
+    return "", list(words)
+
+
+def search(source="all", query=""):
+    """What the Browse tab actually shows, and the area it inferred.
+
+    Returns ``(entries, area)``.
+
+    Plain matching is not enough on its own. Boundary sets are single national
+    files, filtered to a state as they load, so nothing in the district entry
+    contains the word "kerala" and the most natural query anybody types --
+    "kerala districts" -- matches nothing at all. A list that goes blank on the
+    obvious question reads as an empty catalogue rather than a search that
+    needs rephrasing.
+
+    So when a query finds nothing and part of it names a place, that part is
+    taken as the area instead of as a search term, and the rest is matched
+    again. "kerala districts" then finds the district set with Kerala waiting
+    in the area box, which is exactly what was meant.
+    """
+    found = entries(source, query)
+    if found:
+        return found, ""
+
+    words = [w for w in str(query).lower().split() if w]
+    area, rest = _place_in(words)
+    if not area:
+        return [], ""
+    return entries(source, " ".join(rest)), _titlecase_place(area)
+
+
+def _titlecase_place(text):
+    """Present a gazetteer key the way the rest of the plugin presents names."""
+    small = {"and", "of", "the"}
+    return " ".join(
+        word if word in small else word.capitalize() for word in str(text).split()
+    )
+
+
+#: Shown in place of the list when a search matches nothing, so the panel says
+#: what happened instead of going blank.
+NO_MATCHES = (
+    "Nothing matches that. Try fewer words, or a theme on its own: "
+    "land use, districts, rainfall, hospitals, slope, rail, groundwater."
+)
+
+
+def _no_matches_item():
+    item = QListWidgetItem(NO_MATCHES)
+    item.setFlags(ITEM_NO_FLAGS)
+    return item
 
 
 #: Entry kinds that take a free-text area, and what to call it. Boundaries are
@@ -242,12 +313,30 @@ class CatalogueBrowser(QWidget):
 
     def refresh(self):
         source = self.source.currentData() or "all"
-        self._entries = entries(source, self.search.text())
+        query = self.search.text()
+        self._entries, area = search(source, query)
         self.results.clear()
+
+        if area:
+            # The place was read out of the query, so put it where it acts.
+            self.place.setText(area)
+
         for entry in self._entries[:500]:
             item = QListWidgetItem("{0}  --  {1}".format(entry["title"], entry["id"]))
             self.results.addItem(item)
-        if len(self._entries) > 500:
+
+        if not self._entries:
+            # An empty list with nothing in it looks like an empty catalogue.
+            # Say what happened and what would work instead.
+            self.results.addItem(_no_matches_item())
+            self.status.emit("Nothing matches {0!r}.".format(query.strip()))
+        elif area:
+            self.status.emit(
+                "{0} matches, with {1} filled in as the area.".format(
+                    len(self._entries), area
+                )
+            )
+        elif len(self._entries) > 500:
             self.status.emit(
                 "{0} matches; showing the first 500. Narrow the search to see "
                 "the rest.".format(len(self._entries))

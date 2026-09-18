@@ -110,6 +110,18 @@ def model_name():
     return get("model") or provider_spec()["default_model"]
 
 
+def model_is_configured():
+    """Whether anybody has set the agent up on this install.
+
+    ``model_name()`` always answers with something, because every provider
+    carries a default, so it cannot tell a configured install from a fresh one.
+    This can. Either half counts: naming a model, or storing a key for a
+    provider that needs one. Someone who did neither has never opened the
+    settings dialog, and the Ask tab has nothing to talk to.
+    """
+    return bool(get("model")) or bool(get("auth_config_id"))
+
+
 # --- secrets ---------------------------------------------------------------
 
 

@@ -140,7 +140,7 @@ def test_imports():
     from srot.ui import dock, settings_dialog  # noqa: F401,F811
 
     check("every plugin module imports under real PyQGIS", True)
-    check("version is exposed", srot.__version__ == "0.1.2")
+    check("version is exposed", srot.__version__ == "0.1.4")
     check(
         "classFactory exists",
         callable(getattr(srot, "classFactory", None)),
@@ -731,15 +731,34 @@ def test_catalogue_browser_against_real_qt():
 
     # And the dock must carry the tab, defaulting to Browse with no model.
     keep(panel)
+    from srot.core import settings as plugin_settings
+
+    saved_model = plugin_settings.get("model")
+    plugin_settings.set_value("model", "")
+
     dock = SrotDock()
     check("the dock has two tabs", dock.tabs.count() == 2, dock.tabs.count())
     check("the first tab is Browse", dock.tabs.tabText(0) == "Browse",
           dock.tabs.tabText(0))
     check("the second tab is Ask", dock.tabs.tabText(1) == "Ask")
     check("the dock exposes the browser", hasattr(dock, "browser"))
+    # The tab that is actually showing, not merely the one that exists first.
+    # A fresh install cannot use Ask at all, so opening there would hand a new
+    # user a prompt box that can only fail.
+    check("a fresh install opens on Browse", dock.tabs.currentIndex() == 0,
+          "opened on {0!r}".format(dock.tabs.tabText(dock.tabs.currentIndex())))
     dock.set_context_provider(lambda: ctx)
     check("a late-bound context resolves", dock._resolve_context() is ctx)
     keep(dock)
+
+    plugin_settings.set_value("model", "llama3.2")
+    configured = SrotDock()
+    check("an install with a model opens on Ask",
+          configured.tabs.currentIndex() == 1,
+          "opened on {0!r}".format(
+              configured.tabs.tabText(configured.tabs.currentIndex())))
+    keep(configured)
+    plugin_settings.set_value("model", saved_model or "")
 
     for layer_id in list(project.mapLayers()):
         project.removeMapLayer(layer_id)

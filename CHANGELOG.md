@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.1.4 — 2026-09-18
+
+Two things found by opening the panel in QGIS and using it, which no amount of
+automated checking had caught.
+
+- **Searching "kerala districts" returned nothing.** Boundary sets are single
+  national files, filtered to a state as they load, so no entry in the
+  catalogue contains the word "kerala" and the most natural query anybody
+  types matched none of them. When a query finds nothing and part of it names
+  a place, that part is now read as the area rather than as a search term, and
+  the rest is matched again: "kerala districts" finds the district set with
+  Kerala already filled into the area box. Historical names resolve to the
+  current one, so "bangalore hospitals" fills in Bengaluru.
+- **An empty result list showed nothing at all**, which reads as an empty
+  catalogue rather than a search worth rephrasing. It now says so, and names
+  the themes that do work.
+
+## 0.1.3 — 2026-09-18
+
+- **The panel opened on the wrong tab.** It is meant to open on Browse until a
+  model is configured, because Browse works from the first click and Ask cannot
+  work at all without a model. It opened on Ask every time. The test for
+  "is a model configured" called `model_name()`, which falls back to the
+  provider's default model and is therefore never empty, so the condition was
+  always true. A new install now lands on Browse, as intended, and the suites
+  check the tab that is actually showing rather than only the tabs that exist.
+
 ## 0.1.2 — 2026-09-18
 
 The plugin no longer carries a data.gov.in key of its own.
@@ -101,7 +128,7 @@ First release.
 
 ### Verification
 
-- 673 offline checks, plus 121 against a real QGIS 3.34.4 / Qt 5.15.13 build,
+- 688 offline checks, plus 121 against a real QGIS 3.34.4 / Qt 5.15.13 build,
   covering real Processing runs, renderers, layout export, the encrypted key
   store, Qt widgets, and the `initGui` / `unload` install path.
 - Zero third-party Python dependencies.
