@@ -67,14 +67,17 @@ def entries(source="all", query=""):
 
     if source in ("all", "boundaries"):
         for key, entry in catalog.BOUNDARY_SOURCES.items():
+            if entry.get("official_boundary"):
+                detail = "Survey of India derived"
+            else:
+                detail = "Community or Census derived"
+            if entry.get("state_field"):
+                detail += ", can be filtered to one state"
             found.append({
                 "kind": "boundary",
                 "id": key,
                 "title": entry["title"],
-                "detail": ("Survey of India derived" if entry.get("official_boundary")
-                           else "Community or Census derived")
-                          + (", can be filtered to one state"
-                             if entry.get("state_field") else ""),
+                "detail": detail,
                 "state": "",
                 "theme": "admin",
             })
@@ -169,11 +172,16 @@ class CatalogueBrowser(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
 
+        total = (
+            catalog.bhuvan_layer_count()
+            + len(catalog.DATAGOV_RESOURCES)
+            + len(catalog.BOUNDARY_SOURCES)
+            + len(catalog.OSM_PRESETS)
+        )
         intro = QLabel(
             "Search {0} layers and datasets from ISRO Bhuvan, data.gov.in, "
             "the boundary sets and OpenStreetMap. No account or model "
-            "needed.".format(catalog.bhuvan_layer_count() + len(catalog.DATAGOV_RESOURCES)
-                              + len(catalog.BOUNDARY_SOURCES) + len(catalog.OSM_PRESETS)),
+            "needed.".format(total),
             self,
         )
         intro.setWordWrap(True)

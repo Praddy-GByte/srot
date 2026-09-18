@@ -112,6 +112,7 @@ class QNetworkRequest(object):
 
 
 class QgsBlockingNetworkRequest(object):
+    ErrorCode = _Enum(NoError=0)
     NoError = 0
 
     def __init__(self):
@@ -843,6 +844,8 @@ class QgsStyle(object):
 
 
 class QgsGraduatedSymbolRenderer(object):
+    Mode = _Enum(EqualInterval=0, Quantile=1, Jenks=2, StdDev=3, Pretty=4)
+
     Quantile = 2
 
     def __init__(self, attr="", ranges=None):
@@ -858,6 +861,30 @@ class QgsGraduatedSymbolRenderer(object):
         renderer.classes = classes
         renderer.ramp = ramp
         return renderer
+
+
+class QgsUnitTypes(object):
+    LayoutUnit = _Enum(LayoutMillimeters=0, LayoutCentimeters=1, LayoutPoints=4)
+
+
+class QgsLayoutExporter(object):
+    ExportResult = _Enum(Success=0, Canceled=1, MemoryError=2, FileError=3)
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+
+class QgsVectorFileWriter(object):
+    WriterError = _Enum(NoError=0, ErrDriverNotFound=1, ErrCreateDataSource=2)
+
+    class SaveVectorOptions(object):
+        def __init__(self):
+            self.driverName = ""
+            self.fileEncoding = ""
+
+    @staticmethod
+    def writeAsVectorFormatV3(layer, path, transform_context, options):  # noqa: N802
+        return (0, "")
 
 
 class QgsDataSourceUri(object):
@@ -959,14 +986,16 @@ def install():
         "QgsSingleSymbolRenderer": QgsSingleSymbolRenderer,
         "QgsStyle": QgsStyle,
         "QgsSymbol": QgsSymbol,
+        "QgsUnitTypes": QgsUnitTypes,
+        "QgsLayoutExporter": QgsLayoutExporter,
+        "QgsVectorFileWriter": QgsVectorFileWriter,
     }.items():
         setattr(core, name, value)
     for name in (
-        "QgsCoordinateTransform", "QgsFeature", "QgsLayoutExporter",
+        "QgsCoordinateTransform", "QgsFeature",
         "QgsLayoutItemLabel", "QgsLayoutItemLegend", "QgsLayoutItemMap",
         "QgsLayoutItemScaleBar", "QgsLayoutPoint", "QgsLayoutSize",
-        "QgsPrintLayout", "QgsUnitTypes", "QgsVectorFileWriter",
-        "QgsTextFormat",
+        "QgsPrintLayout", "QgsTextFormat",
     ):
         setattr(core, name, _stub(name))
 

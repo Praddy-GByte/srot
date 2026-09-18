@@ -34,12 +34,17 @@ from qgis.core import (
     QgsPrintLayout,
     QgsProject,
     QgsRectangle,
-    QgsUnitTypes,
     QgsVectorFileWriter,
     QgsVectorLayer,
 )
 
 from ..core import provenance
+from ..core.compat import (
+    EXPORT_SUCCESS,
+    GRADUATED_QUANTILE,
+    LAYOUT_MM,
+    WRITER_NO_ERROR,
+)
 from ..india import catalog, loaders, places
 
 SAFE = "safe"
@@ -1090,7 +1095,7 @@ def _t_run_processing(args, ctx, payload=None):
     ctx.journal.add_step(
         "run_processing",
         "\n".join(lines),
-        "{0} -> {1}".format(algorithm.displayName(), ", ".join(l["name"] for l in loaded) or "no layer"),
+        "{0} -> {1}".format(algorithm.displayName(), ", ".join(entry["name"] for entry in loaded) or "no layer"),
     )
     return {
         "algorithm": algorithm_id,
@@ -1103,7 +1108,7 @@ def _t_run_processing(args, ctx, payload=None):
 
 def _resolve_parameter(ctx, key, value):
     """Turn layer names in parameters into real layer objects."""
-    if isinstance(value, str) and value and not os.path.sep in value:
+    if isinstance(value, str) and value and os.path.sep not in value:
         if value in ("TEMPORARY_OUTPUT", "memory:"):
             return value
         try:
@@ -1269,7 +1274,7 @@ def _t_style_layer(args, ctx, payload=None):
                 layer,
                 field,
                 classes,
-                QgsGraduatedSymbolRenderer.Quantile,
+                GRADUATED_QUANTILE,
                 symbol,
                 _colour_ramp(args.get("ramp")),
             )
@@ -1350,15 +1355,15 @@ def _t_create_layout(args, ctx, payload=None):
     dimensions = {"A4": (297, 210), "A3": (420, 297), "A5": (210, 148)}.get(size, (297, 210))
     orientation = (args.get("orientation") or "landscape").lower()
     width, height = dimensions if orientation == "landscape" else dimensions[::-1]
-    page.setPageSize(QgsLayoutSize(width, height, QgsUnitTypes.LayoutMillimeters))
+    page.setPageSize(QgsLayoutSize(width, height, LAYOUT_MM))
 
     map_item = QgsLayoutItemMap(layout)
     map_item.setRect(0, 0, width - 20, height - 40)
     if ctx.iface:
         map_item.setExtent(ctx.iface.mapCanvas().extent())
-    map_item.attemptMove(QgsLayoutPoint(10, 25, QgsUnitTypes.LayoutMillimeters))
+    map_item.attemptMove(QgsLayoutPoint(10, 25, LAYOUT_MM))
     map_item.attemptResize(
-        QgsLayoutSize(width - 20, height - 45, QgsUnitTypes.LayoutMillimeters)
+        QgsLayoutSize(width - 20, height - 45, LAYOUT_MM)
     )
     map_item.setFrameEnabled(True)
     layout.addLayoutItem(map_item)
@@ -1368,7 +1373,7 @@ def _t_create_layout(args, ctx, payload=None):
     label.setFontColor(_black())
     _set_label_font(label, int(args.get("title_size", 18) or 18))
     label.adjustSizeToText()
-    label.attemptMove(QgsLayoutPoint(10, 8, QgsUnitTypes.LayoutMillimeters))
+    label.attemptMove(QgsLayoutPoint(10, 8, LAYOUT_MM))
     layout.addLayoutItem(label)
 
     if args.get("legend", True):
@@ -1376,7 +1381,7 @@ def _t_create_layout(args, ctx, payload=None):
         legend.setTitle(args.get("legend_title") or "Legend")
         legend.setLinkedMap(map_item)
         legend.attemptMove(
-            QgsLayoutPoint(width - 60, 30, QgsUnitTypes.LayoutMillimeters)
+            QgsLayoutPoint(width - 60, 30, LAYOUT_MM)
         )
         layout.addLayoutItem(legend)
 
@@ -1386,7 +1391,7 @@ def _t_create_layout(args, ctx, payload=None):
         scalebar.setLinkedMap(map_item)
         scalebar.applyDefaultSize()
         scalebar.attemptMove(
-            QgsLayoutPoint(12, height - 18, QgsUnitTypes.LayoutMillimeters)
+            QgsLayoutPoint(12, height - 18, LAYOUT_MM)
         )
         layout.addLayoutItem(scalebar)
 
@@ -1395,7 +1400,7 @@ def _t_create_layout(args, ctx, payload=None):
     _set_label_font(credit, 7)
     credit.adjustSizeToText()
     credit.attemptMove(
-        QgsLayoutPoint(width - 90, height - 12, QgsUnitTypes.LayoutMillimeters)
+        QgsLayoutPoint(width - 90, height - 12, LAYOUT_MM)
     )
     layout.addLayoutItem(credit)
 
@@ -1464,7 +1469,7 @@ register(
 def _t_export_layout(args, ctx, payload=None):
     layout = ctx.project.layoutManager().layoutByName(args["layout"])
     if layout is None:
-        names = [l.name() for l in ctx.project.layoutManager().layouts()]
+        names = [item.name() for item in ctx.project.layoutManager().layouts()]
         raise ToolError(
             "No layout called {0!r}. Layouts in this project: {1}".format(
                 args["layout"], ", ".join(names) or "(none)"
@@ -1481,7 +1486,7 @@ def _t_export_layout(args, ctx, payload=None):
         settings_obj.dpi = float(args.get("dpi", 300) or 300)
         result = exporter.exportToImage(path, settings_obj)
 
-    if result != QgsLayoutExporter.Success:
+    if result != EXPORT_SUCCESS:
         raise ToolError("QGIS could not write the layout to {0}.".format(path))
     ctx.journal.add_step(
         "export_layout",
@@ -1539,7 +1544,7 @@ def _t_export_layer(args, ctx, payload=None):
     error = QgsVectorFileWriter.writeAsVectorFormatV3(
         layer, path, ctx.project.transformContext(), options
     )
-    if error[0] != QgsVectorFileWriter.NoError:
+    if error[0] != WRITER_NO_ERROR:
         raise ToolError("Export failed: {0}".format(error[1]))
 
     ctx.journal.add_step(

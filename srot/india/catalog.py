@@ -362,7 +362,10 @@ BOUNDARY_SOURCES = {
     },
     "parliamentary": {
         "title": "Parliamentary constituencies 2019 (simplified)",
-        "url": "https://raw.githubusercontent.com/datameet/maps/master/parliamentary-constituencies/india_pc_2019_simplified.geojson",
+        "url": (
+            "https://raw.githubusercontent.com/datameet/maps/master/"
+            "parliamentary-constituencies/india_pc_2019_simplified.geojson"
+        ),
         "format": "geojson",
         "fields": ["pc_id", "st_code", "st_name", "pc_no", "pc_name", "pc_name_hi", "pc_category"],
         "join_field": "pc_name",

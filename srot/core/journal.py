@@ -97,7 +97,7 @@ def _describe(layer, title, organisation, licence, citation, url, retrieved):
 def _write_sources(path, style="plain"):
     """Write a source list for every described layer in the project."""
     entries, seen = [], []
-    for layer in sorted(project.mapLayers().values(), key=lambda l: l.name().lower()):
+    for layer in sorted(project.mapLayers().values(), key=lambda item: item.name().lower()):
         data = layer.metadata()
         if not (data.rights() or data.licenses()):
             continue

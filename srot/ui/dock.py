@@ -299,6 +299,6 @@ def _summarise(content, ok):
         if "written" in data:
             return "✓ wrote {0}".format(os.path.basename(str(data["written"])))
         if "layers_added" in data:
-            names = [l["name"] for l in data["layers_added"]]
+            names = [added["name"] for added in data["layers_added"]]
             return "✓ " + (", ".join(names) if names else "ran, no layer added")
     return "✓ " + " ".join(str(content).split())[:200]

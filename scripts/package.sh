@@ -38,6 +38,7 @@ mkdir -p dist
 rm -f "dist/$PACKAGE.zip"
 
 zip -rq "dist/$PACKAGE.zip" "$PACKAGE" \
+  -x "$PACKAGE/tests/*" \
   -x "*.pyc" \
   -x "*__pycache__*" \
   -x "*.DS_Store" \

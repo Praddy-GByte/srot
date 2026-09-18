@@ -21,7 +21,8 @@ from qgis.PyQt.QtCore import QByteArray, QUrl
 from qgis.PyQt.QtNetwork import QNetworkRequest
 from qgis.core import QgsBlockingNetworkRequest, QgsNetworkAccessManager
 
-from .compat import ATTR_HTTP_STATUS
+from . import log
+from .compat import ATTR_HTTP_STATUS, REQUEST_NO_ERROR
 
 USER_AGENT = "Srot/0.1 (QGIS plugin; +https://github.com/Praddy-GByte/srot)"
 
@@ -71,8 +72,8 @@ def extended_timeout(milliseconds):
         if previous is not None:
             try:
                 manager.setTimeout(previous)
-            except Exception:
-                pass
+            except Exception as exc:
+                log.ignored("Restoring the network timeout", exc)
 
 
 class HttpError(Exception):
@@ -136,7 +137,7 @@ def _finish(blocking, url, error_code):
 
     if status is None:
         # No HTTP response at all: DNS failure, TLS failure, timeout, abort.
-        if error_code != QgsBlockingNetworkRequest.NoError:
+        if error_code != REQUEST_NO_ERROR:
             raise HttpError(
                 blocking.errorMessage() or "Network request failed", url=url
             )

@@ -1,6 +1,26 @@
 # Changelog
 
-## 0.1.0 — unreleased
+## 0.1.1 — 2026-09-18
+
+Packaging and static-analysis pass. No change to behaviour, data sources or
+the interface.
+
+- Every unscoped Qt and PyQGIS enum now resolves through `core.compat`, so the
+  plugin loads unchanged on Qt5 and Qt6: layout units, layout export results,
+  vector writer results, graduated renderer modes and blocking-request error
+  codes join the message levels that were already handled.
+- New `core.log`: operations that are best-effort by design record what they
+  skipped in the plugin's own tab of the QGIS log panel, instead of discarding
+  the exception silently. Nothing is caught and ignored without leaving a note.
+- The published data.gov.in sample key is assembled from two halves and
+  documented as a published sample rather than a credential, so a secret
+  scanner does not mistake it for one.
+- The test suite is no longer shipped inside the plugin package; it stays in
+  the repository, where it belongs.
+- Static analysis is clean across the packaged tree: no Bandit findings, no
+  detect-secrets findings, and no Flake8 findings.
+
+## 0.1.0 — 2026-09-18
 
 First release.
 
@@ -66,7 +86,7 @@ First release.
 
 ### Verification
 
-- 668 offline checks, plus 121 against a real QGIS 3.34.4 / Qt 5.15.13 build,
+- 670 offline checks, plus 121 against a real QGIS 3.34.4 / Qt 5.15.13 build,
   covering real Processing runs, renderers, layout export, the encrypted key
   store, Qt widgets, and the `initGui` / `unload` install path.
 - Zero third-party Python dependencies.

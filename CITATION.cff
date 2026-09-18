@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use Srot in your work, please cite it as below."
+title: "Srot: verified Indian government geodata in QGIS"
+abstract: >-
+  Srot brings verified Indian government geodata into QGIS, each layer carrying
+  its own citation. It serves 342 ISRO Bhuvan layers across 44 states and union
+  territories, the Census and Survey of India boundary sets, live data.gov.in
+  feeds and OpenStreetMap presets, probing each layer before it is added so that
+  empty and unavailable sources are reported rather than silently loaded.
+  Publisher, licence, source URL and retrieval date are written into each layer's
+  metadata, and every session exports as a runnable PyQGIS script.
+type: software
+authors:
+  - family-names: Kaushik
+    given-names: Pradeepika
+    orcid: "https://orcid.org/0000-0002-0767-3983"
+version: 0.1.1
+date-released: "2026-09-18"
+doi: 10.5281/zenodo.22832362
+url: "https://github.com/Praddy-GByte/srot"
+repository-code: "https://github.com/Praddy-GByte/srot"
+license: GPL-3.0-or-later
+keywords:
+  - QGIS
+  - geospatial
+  - India
+  - Bhuvan
+  - ISRO
+  - remote sensing
+  - open data
+  - spatial data infrastructure
+  - data provenance
+  - reproducible research

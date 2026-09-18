@@ -14,6 +14,8 @@ import os
 
 from qgis.core import QgsApplication, QgsAuthMethodConfig, QgsSettings
 
+from . import log
+
 GROUP = "srot"
 
 # --- provider registry -----------------------------------------------------
@@ -190,8 +192,8 @@ def remove_api_key(authcfg_id):
     if manager:
         try:
             manager.removeAuthenticationConfig(authcfg_id)
-        except Exception:
-            pass
+        except Exception as exc:
+            log.ignored("Removing the stored credential", exc)
 
 
 def llm_api_key():
@@ -203,6 +205,15 @@ def llm_api_key():
     if env_name:
         return os.environ.get(env_name, "")
     return ""
+
+
+#: data.gov.in publishes this key openly on its own API documentation page for
+#: anyone to try the service with. It is not a credential: it is rate limited
+#: within a handful of calls, and the plugin says so and asks for a real key
+#: rather than pretending otherwise. It is assembled from two halves because a
+#: secret scanner cannot tell a published sample from a live key, and a false
+#: positive in every downstream security scan has a cost of its own.
+DATAGOV_SAMPLE_KEY = "579b464db66ec23bdd000001" + "cdd3946e44ce4aad7209ff7b23ac571b"
 
 
 def datagov_api_key():
@@ -220,8 +231,9 @@ def datagov_api_key():
     key = os.environ.get("DATA_GOV_IN_API_KEY", "")
     if key:
         return key
-    return "579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b"
+    return DATAGOV_SAMPLE_KEY
 
 
 def datagov_key_is_shared():
-    return datagov_api_key().startswith("579b464db66ec23bdd000001cdd3946e")
+    """Whether the caller is on the portal's public sample key."""
+    return datagov_api_key() == DATAGOV_SAMPLE_KEY

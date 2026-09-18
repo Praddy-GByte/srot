@@ -69,8 +69,8 @@ class SrotPlugin:
         if self.runner is not None:
             try:
                 self.runner.cancel()
-            except Exception:
-                pass
+            except Exception as exc:
+                log("Cancelling the agent on unload did not complete: {0}".format(exc))
             self.runner = None
 
         if self.dock is not None:

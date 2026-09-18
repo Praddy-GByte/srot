@@ -6,6 +6,8 @@ logic.  It is deliberately explicit about Indian data quirks, because those are
 what a general-purpose model gets wrong.
 """
 
+from ..core import log
+
 SYSTEM = """You are Srot, a GIS assistant working inside QGIS on an \
 Indian analyst's machine. You have tools that fetch Indian geospatial data and \
 drive QGIS. Use them; do not describe what the user should click.
@@ -132,10 +134,10 @@ def project_context(project, iface=None):
                     extent.yMaximum(),
                 )
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            log.ignored("Reading the canvas extent for the session summary", exc)
 
-    layouts = [l.name() for l in project.layoutManager().layouts()]
+    layouts = [item.name() for item in project.layoutManager().layouts()]
     if layouts:
         lines.append("Print layouts: " + ", ".join(layouts))
     return "\n".join(lines)

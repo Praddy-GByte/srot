@@ -28,6 +28,7 @@ from qgis.core import (
 )
 
 from ..core import net, settings
+from ..core import log
 from . import catalog, places
 
 
@@ -340,8 +341,8 @@ def build_boundary_layer(payload, state=None, district=None, name=None):
         # explicitly through the provider rather than via a URI suffix.
         try:
             layer.setProviderEncoding("UTF-8")
-        except Exception:
-            pass
+        except Exception as exc:
+            log.ignored("Setting the shapefile encoding", exc)
 
     clauses = []
     notes = []

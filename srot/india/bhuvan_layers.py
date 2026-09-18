@@ -546,7 +546,7 @@ def for_state(state_name):
 
 def states_covered():
     """Sorted list of every state the generated shortlist can serve."""
-    return sorted({l["state"] for l in all_layers() if l.get("state")})
+    return sorted({row["state"] for row in all_layers() if row.get("state")})
 
 
 def count():

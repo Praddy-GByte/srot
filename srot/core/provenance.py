@@ -22,6 +22,8 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QDateTime
 
+from . import log
+
 #: Keyword vocabularies used to keep the publisher's own dataset name and the
 #: retrieval date on the layer itself.
 SOURCE_VOCABULARY = "srot:source"
@@ -211,14 +213,15 @@ def describe(
                                stamp.hour, stamp.minute, stamp.second)
             extent_object.setTemporalExtents([QgsDateTimeRange(moment, moment)])
             metadata.setExtent(extent_object)
-    except Exception:
-        # Spatial extent is a nice-to-have; the citation is the point.
-        pass
+    except Exception as exc:
+        # The spatial extent is a nice-to-have; the citation is the point, so
+        # a layer with an odd CRS still gets described.
+        log.ignored("Recording the spatial extent of {0}".format(layer.name()), exc)
 
     try:
         layer.setMetadata(metadata)
-    except Exception:
-        pass
+    except Exception as exc:
+        log.ignored("Attaching metadata to {0}".format(layer.name()), exc)
 
     return {
         "layer": layer.name(),

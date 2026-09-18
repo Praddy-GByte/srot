@@ -303,7 +303,7 @@ srot/
 ├── agent/      providers (3 wire formats), tools (registry + tiers),
 │               prompts, loop (QgsTask state machine)
 ├── ui/         dock, settings dialog
-└── tests/      668 offline checks, no QGIS needed
+└── tests/      670 offline checks, no QGIS needed
 ```
 
 Two rules run through the whole codebase:
@@ -321,7 +321,7 @@ Two rules run through the whole codebase:
 Two suites, and they test different things.
 
 ```bash
-python3 -m srot.tests.run          # 668 checks, no QGIS needed
+python3 -m srot.tests.run          # 670 checks, no QGIS needed
 ```
 
 Runs anywhere: a stub of the PyQGIS API is installed into `sys.modules` first.

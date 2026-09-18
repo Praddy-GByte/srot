@@ -187,13 +187,15 @@ class SettingsDialog(QDialog):
             # The dialog may already be gone -- it is modal, and the user can
             # close it while the test is still in flight. Touching a deleted
             # widget from a Qt slot raises inside the event loop, so check.
+            # The dialog can be closed while the connection test is still
+            # running, which leaves this callback holding a deleted widget.
+            # sip is absent on a few builds, and then there is nothing to ask.
             try:
                 from qgis.PyQt import sip
-
-                if sip.isdeleted(self):
-                    return
-            except Exception:
-                pass
+            except ImportError:
+                sip = None
+            if sip is not None and sip.isdeleted(self):
+                return
             try:
                 self.test_button.setEnabled(True)
                 if task.error is not None:

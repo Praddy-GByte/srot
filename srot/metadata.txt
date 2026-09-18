@@ -27,8 +27,8 @@ about=Srot turns plain-language requests into real QGIS work, with Indian geodat
     * Reproducible - every session is recorded as a runnable PyQGIS script you can save, review and re-run.
     * Citation-ready - each layer carries its publisher, licence, citation and retrieval date in the layer's
       own metadata, and the whole project exports as a source list in plain text, Markdown or BibTeX.
-version=0.1.0
-author=Dr. Pradeepika Kaushik
+version=0.1.1
+author=Pradeepika Kaushik
 email=pradeepika.kaushik@gmail.com
 repository=https://github.com/Praddy-GByte/srot
 tracker=https://github.com/Praddy-GByte/srot/issues
@@ -39,7 +39,14 @@ tags=ai,agent,llm,india,bhuvan,isro,census,openstreetmap,air quality,automation,
 experimental=True
 deprecated=False
 server=False
-changelog=0.1.0 - First public release.
+changelog=0.1.1 - Packaging and static-analysis pass. No change to behaviour.
+    * Every unscoped Qt and PyQGIS enum now resolves through a compatibility layer, so the plugin
+      loads unchanged on Qt5 and Qt6.
+    * Best-effort operations record what they skipped in the plugin's log panel tab rather than
+      discarding the exception silently.
+    * The test suite is no longer shipped inside the plugin package.
+    * Clean under Bandit, detect-secrets and Flake8.
+    0.1.0 - First public release.
     * Natural-language agent with 20 declared tools and no code execution.
     * 342 Bhuvan layers across 44 states and union territories, plus data.gov.in, Census 2011
       boundaries, Overpass and Open-Meteo.

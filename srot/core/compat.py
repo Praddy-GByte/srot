@@ -11,7 +11,15 @@ Nothing here imports anything outside ``qgis.PyQt`` / ``qgis.core``.
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtNetwork import QNetworkRequest
-from qgis.core import Qgis, QgsTask
+from qgis.core import (
+    Qgis,
+    QgsBlockingNetworkRequest,
+    QgsGraduatedSymbolRenderer,
+    QgsLayoutExporter,
+    QgsTask,
+    QgsUnitTypes,
+    QgsVectorFileWriter,
+)
 
 
 def _enum(owner, scope, name, default=None):
@@ -56,6 +64,11 @@ REDIRECT_POLICY_SAME_ORIGIN = _enum(
 
 # --- QGIS ------------------------------------------------------------------
 TASK_CAN_CANCEL = _enum(QgsTask, "Flag", "CanCancel")
+LAYOUT_MM = _enum(QgsUnitTypes, "LayoutUnit", "LayoutMillimeters")
+EXPORT_SUCCESS = _enum(QgsLayoutExporter, "ExportResult", "Success")
+WRITER_NO_ERROR = _enum(QgsVectorFileWriter, "WriterError", "NoError")
+GRADUATED_QUANTILE = _enum(QgsGraduatedSymbolRenderer, "Mode", "Quantile")
+REQUEST_NO_ERROR = _enum(QgsBlockingNetworkRequest, "ErrorCode", "NoError")
 MSG_INFO = _enum(Qgis, "MessageLevel", "Info")
 MSG_WARNING = _enum(Qgis, "MessageLevel", "Warning")
 MSG_CRITICAL = _enum(Qgis, "MessageLevel", "Critical")
@@ -78,8 +91,5 @@ def standard_button(cls, name):
 
 
 def exec_dialog(dialog):
-    """``QDialog.exec()`` on Qt6, ``exec_()`` on older PyQt5 builds."""
-    runner = getattr(dialog, "exec", None)
-    if callable(runner):
-        return runner()
-    return dialog.exec_()  # pragma: no cover - very old PyQt5 only
+    """Run a modal dialog. ``exec()`` is present on PyQt5 and PyQt6 alike."""
+    return dialog.exec()

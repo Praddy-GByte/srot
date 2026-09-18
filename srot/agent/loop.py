@@ -25,6 +25,7 @@ from qgis.PyQt.QtCore import QObject, pyqtSignal
 from qgis.core import QgsApplication
 
 from ..core import settings
+from ..core import log
 from ..core.tasks import CallableTask as _CallableTask
 from ..core.journal import Journal
 from . import prompts, providers, tools
@@ -77,8 +78,8 @@ class AgentRunner(QObject):
         if self._task is not None:
             try:
                 self._task.cancel()
-            except Exception:
-                pass
+            except Exception as exc:
+                log.ignored("Cancelling the running task", exc)
         self._set_busy(False)
         self.status.emit("Cancelled.")
 
