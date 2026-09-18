@@ -47,6 +47,18 @@ from qgis.core import (  # noqa: E402
 
 RESULTS = []
 
+#: Widgets built during the tests. A headless harness runs no event loop, so
+#: deleteLater() would queue a deletion that never happens and then be freed a
+#: second time during interpreter teardown. Holding a reference instead lets
+#: the process own them until it exits.
+WIDGETS = []
+
+
+def keep(widget):
+    """Keep a widget alive for the rest of the run, and return it."""
+    WIDGETS.append(widget)
+    return widget
+
 
 def check(name, condition, detail=""):
     RESULTS.append((name, bool(condition), str(detail)[:400]))
@@ -54,6 +66,7 @@ def check(name, condition, detail=""):
 
 
 def section(name, function):
+    print("  .. {0}".format(name), flush=True)
     try:
         function()
     except Exception as exc:
@@ -717,7 +730,7 @@ def test_catalogue_browser_against_real_qt():
           any("refused" in m for m in messages), messages[-1:])
 
     # And the dock must carry the tab, defaulting to Browse with no model.
-    panel.deleteLater()
+    keep(panel)
     dock = SrotDock()
     check("the dock has two tabs", dock.tabs.count() == 2, dock.tabs.count())
     check("the first tab is Browse", dock.tabs.tabText(0) == "Browse",
@@ -726,7 +739,7 @@ def test_catalogue_browser_against_real_qt():
     check("the dock exposes the browser", hasattr(dock, "browser"))
     dock.set_context_provider(lambda: ctx)
     check("a late-bound context resolves", dock._resolve_context() is ctx)
-    dock.deleteLater()
+    keep(dock)
 
     for layer_id in list(project.mapLayers()):
         project.removeMapLayer(layer_id)
@@ -759,8 +772,8 @@ def test_widgets_construct():
     dialog.provider.setCurrentIndex(0)
     check("switching provider updates the hint", bool(dialog.key_hint.text()))
 
-    dock.deleteLater()
-    dialog.deleteLater()
+    keep(dock)
+    keep(dialog)
 
 
 def test_agent_loop_with_real_tasks():
@@ -987,9 +1000,16 @@ def main():
             len(RESULTS), len(RESULTS) - len(failed), len(failed)
         )
     )
-    app.exitQgis()
-    return 1 if failed else 0
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    # Every result is computed and flushed by this point. Qt objects created
+    # without an event loop are destroyed in an unpredictable order during
+    # interpreter teardown, which is a crash this harness has nothing to learn
+    # from, so the process leaves before that happens. os._exit skips teardown
+    # while still carrying the exit code CI reads.
+    os._exit(1 if failed else 0)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
